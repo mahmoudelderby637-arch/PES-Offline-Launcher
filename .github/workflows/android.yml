@@ -1,0 +1,48 @@
+
+name: Build PES Launcher APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract project
+        run: |
+          unzip -q PES_Offline_Launcher_Source.zip -d source
+
+      - name: Fix Android source
+        run: |
+          sed -i '/card.setBackgroundTintList/d' source/PES_Offline_Launcher/app/src/main/java/com/example/pesofflinelauncher/MainActivity.java
+
+      - name: Build APK
+        run: |
+          gradle -p source/PES_Offline_Launcher assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PES-Offline-Launcher-APK
+          path: source/PES_Offline_Launcher/app/build/outputs/apk/debug/app-debug.apk
+          
